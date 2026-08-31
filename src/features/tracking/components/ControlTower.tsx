@@ -1,6 +1,7 @@
 'use client';
 import {
   AlertCircle,
+  Check,
   ChevronDown,
   ChevronRight,
   CircleAlert,
@@ -35,6 +36,7 @@ import {
 } from '@/src/shared/utils/format';
 import { StatusBadge, statusText } from './StatusBadge';
 import { TrackingMap } from './TrackingMap';
+import type { ControlTowerScenario } from '@/src/app/routing/usePrototypeRoute';
 
 const statusIcon = {
   on_track: Truck,
@@ -50,6 +52,7 @@ const edge = {
   offline: 'border-l-status-gray',
   completed: 'border-l-status-green',
 };
+const progressWidth = (value: number) => value >= 100 ? 'w-full' : value >= 75 ? 'w-3/4' : value >= 66 ? 'w-2/3' : value >= 50 ? 'w-1/2' : value >= 33 ? 'w-1/3' : 'w-1/4';
 
 function Kpis({ metrics }: { metrics: TrackingMetrics }) {
   const cards = [
@@ -94,11 +97,13 @@ function TripList({
   drivers,
   vehicles,
   total,
+  emptyMessage = COPY.noTripsFiltered,
 }: {
   trips: Trip[];
   drivers: Driver[];
   vehicles: Vehicle[];
   total: number;
+  emptyMessage?: string;
 }) {
   const selected = useTrackingStore((s) => s.selectedTripId);
   const hovered = useTrackingStore((s) => s.hoveredTripId);
@@ -152,7 +157,7 @@ function TripList({
         <div className="grid flex-1 place-items-center p-6 text-center">
           <div>
             <Search className="mx-auto mb-3 size-8 text-muted" />
-            <strong>{COPY.noTripsFiltered}</strong>
+            <strong>{emptyMessage}</strong>
             <p className="mt-1 text-xs text-muted">
               Try adjusting or clearing the current filters.
             </p>
@@ -277,10 +282,7 @@ function Drawer({
         />
         <Metric label="Progress" value={`${Math.round(trip.progressPct)}%`} />
         <div className="col-span-3 h-1.5 rounded bg-slate-200">
-          <div
-            className={`h-full rounded ${trip.status === 'delayed' ? 'bg-status-red' : trip.status === 'at_risk' ? 'bg-status-amber' : trip.status === 'offline' ? 'bg-status-gray' : 'bg-status-green'}`}
-            style={{ width: `${trip.progressPct}%` }}
-          />
+          <div className={`h-full rounded ${progressWidth(trip.progressPct)} ${trip.status === 'delayed' ? 'bg-status-red' : trip.status === 'at_risk' ? 'bg-status-amber' : trip.status === 'offline' ? 'bg-status-gray' : 'bg-status-green'}`} />
         </div>
       </div>
       <div className="border-b border-border p-4">
@@ -406,6 +408,19 @@ function Exceptions({
             </tr>
           </thead>
           <tbody>
+            {!alerts.length && (
+              <tr>
+                <td
+                  colSpan={10}
+                  className="h-28 text-center text-sm text-muted"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Check className="size-5 text-status-green" />
+                    {COPY.noExceptions}
+                  </span>
+                </td>
+              </tr>
+            )}
             {alerts.map((alert) => {
               const trip = trips.find((t) => t.id === alert.tripId),
                 driver = drivers.find((d) => d.id === trip?.driverId),
@@ -531,7 +546,103 @@ function Filters() {
   );
 }
 
-export function ControlTower() {
+function OverviewSkeleton() {
+  return (
+    <div
+      className="space-y-3 p-3 lg:p-4"
+      aria-busy="true"
+      aria-label="Loading Control Tower"
+    >
+      <section className="grid grid-flow-col auto-cols-[170px] gap-2 overflow-hidden xl:grid-cols-6">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div
+            key={index}
+            className="h-[88px] animate-pulse rounded-xl border border-border bg-white p-3"
+          >
+            <span className="block h-3 w-24 rounded bg-slate-200" />
+            <span className="mt-3 block h-7 w-14 rounded bg-slate-200" />
+            <span className="mt-2 block h-2 w-20 rounded bg-slate-100" />
+          </div>
+        ))}
+      </section>
+      <section className="grid h-[545px] grid-cols-[285px_1fr] overflow-hidden rounded-xl border border-border bg-white xl:grid-cols-[285px_1fr_330px]">
+        <div className="border-r border-border p-3">
+          <span className="block h-4 w-28 rounded bg-slate-200" />
+          <span className="mt-5 block h-9 rounded bg-slate-100" />
+          {Array.from({ length: 4 }, (_, index) => (
+            <div
+              key={index}
+              className="mt-3 h-20 animate-pulse rounded-lg bg-slate-100"
+            />
+          ))}
+        </div>
+        <div className="relative grid place-items-center bg-[#edf2ee]">
+          <LoaderCircle className="size-8 animate-spin text-charcoal" />
+          <span className="mt-12 text-xs text-muted">Loading map data…</span>
+        </div>
+        <div className="hidden border-l border-border p-4 xl:block">
+          <span className="block h-5 w-28 rounded bg-slate-200" />
+          {Array.from({ length: 6 }, (_, index) => (
+            <span
+              key={index}
+              className="mt-4 block h-3 animate-pulse rounded bg-slate-100"
+            />
+          ))}
+        </div>
+      </section>
+      <div className="h-40 animate-pulse rounded-xl border border-border bg-white p-4">
+        <span className="block h-4 w-36 rounded bg-slate-200" />
+      </div>
+    </div>
+  );
+}
+
+function OverviewError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="space-y-3 p-3 lg:p-4">
+      <section className="grid grid-cols-2 gap-2 lg:grid-cols-6">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div
+            key={index}
+            className="h-[88px] rounded-xl border border-status-red/20 bg-white p-3"
+          >
+            <span className="text-xs font-semibold">Unable to load</span>
+            <span className="mt-5 block h-2 w-20 bg-status-red-soft" />
+          </div>
+        ))}
+      </section>
+      <div className="flex items-center justify-between rounded-xl border border-status-red/30 bg-status-red-soft p-4 text-sm text-status-red">
+        <span className="flex items-center gap-2">
+          <AlertCircle className="size-5" />
+          <b>{COPY.unableOverview}</b>
+        </span>
+        <button
+          onClick={onRetry}
+          className="rounded-full border border-status-red px-5 py-2 font-bold"
+        >
+          Retry
+        </button>
+      </div>
+      <section className="grid h-[545px] grid-cols-[285px_1fr_330px] overflow-hidden rounded-xl border border-border bg-white">
+        <div className="grid place-items-center border-r border-border text-center text-sm text-muted">
+          Failed to load trips
+        </div>
+        <div className="grid place-items-center bg-status-red-soft/40 text-center text-sm text-status-red">
+          Map data unavailable
+        </div>
+        <div className="grid place-items-center border-l border-border text-center text-sm text-muted">
+          Unable to load trip details
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function ControlTower({
+  scenario = 'default',
+}: {
+  scenario?: ControlTowerScenario;
+}) {
   const { data, isLoading, isError, refetch } = useTrackingData();
   const selectedId = useTrackingStore((s) => s.selectedTripId);
   const hovered = useTrackingStore((s) => s.hoveredTripId);
@@ -547,8 +658,10 @@ export function ControlTower() {
     if (!data) return [];
     const q = filters.query.toLowerCase();
     const alertIds = new Set(data.alerts.map((a) => a.tripId));
+    if (scenario === 'empty' || scenario === 'no-results') return [];
     return data.trips.filter(
       (t) =>
+        t.status !== 'completed' &&
         (!q ||
           `${t.id} ${t.origin} ${t.destination} ${data.drivers.find((d) => d.id === t.driverId)?.name}`
             .toLowerCase()
@@ -564,38 +677,32 @@ export function ControlTower() {
             .includes(filters.driverVehicle.toLowerCase())) &&
         (!filters.exceptionOnly || alertIds.has(t.id)),
     );
-  }, [data, filters]);
-  if (isLoading)
-    return (
-      <div className="grid h-[calc(100vh-72px)] place-items-center">
-        <div className="text-center">
-          <LoaderCircle className="mx-auto mb-3 size-8 animate-spin text-brand" />
-          <p>{COPY.loadingMap}</p>
-        </div>
-      </div>
-    );
-  if (isError || !data)
-    return (
-      <div className="grid h-[calc(100vh-72px)] place-items-center">
-        <div className="rounded-xl border border-status-red/30 bg-white p-8 text-center">
-          <AlertCircle className="mx-auto mb-3 text-status-red" />
-          <b>{COPY.unableOverview}</b>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 block w-full rounded-full bg-brand py-2 text-white"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  const selected = data.trips.find((t) => t.id === selectedId);
+  }, [data, filters, scenario]);
+  if (scenario === 'loading' || isLoading) return <OverviewSkeleton />;
+  if (scenario === 'error' || isError || !data)
+    return <OverviewError onRetry={() => refetch()} />;
+  const selected = filtered.find((t) => t.id === selectedId);
   const alerts = data.alerts.filter((a) =>
     filtered.some((t) => t.id === a.tripId),
   );
   return (
     <div className={fullscreen ? 'h-screen p-0' : 'space-y-3 p-3 lg:p-4'}>
-      {!fullscreen && <Kpis metrics={data.metrics} />}
+      {!fullscreen && (
+        <Kpis
+          metrics={
+            scenario === 'empty'
+              ? {
+                  total: 0,
+                  onTrack: 0,
+                  atRisk: 0,
+                  delayed: 0,
+                  exceptions: 0,
+                  onTimePerformance: 0,
+                }
+              : data.metrics
+          }
+        />
+      )}
       <section
         className={`relative overflow-hidden border border-border bg-white ${fullscreen ? 'h-screen rounded-none' : 'h-[545px] rounded-xl'}`}
       >
@@ -606,7 +713,10 @@ export function ControlTower() {
             trips={filtered}
             drivers={data.drivers}
             vehicles={data.vehicles}
-            total={data.metrics.total}
+            total={scenario === 'empty' ? 0 : data.metrics.total}
+            emptyMessage={
+              scenario === 'empty' ? COPY.noTripsTenant : COPY.noTripsFiltered
+            }
           />
           <div className="relative">
             <div className="absolute left-3 top-3 z-10 flex gap-2">

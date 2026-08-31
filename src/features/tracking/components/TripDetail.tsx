@@ -22,6 +22,7 @@ import {
 } from '@/src/shared/utils/format';
 import { StatusBadge, statusText } from './StatusBadge';
 import { TrackingMap } from './TrackingMap';
+import type { TripDetailScenario } from '@/src/app/routing/usePrototypeRoute';
 
 function Summary({ trip }: { trip: Trip }) {
   const completed = trip.status === 'completed',
@@ -329,7 +330,77 @@ function Card({
   );
 }
 
-export function TripDetail() {
+function TripDetailLoading() {
+  return (
+    <div
+      className="space-y-3 p-3 lg:p-5"
+      aria-busy="true"
+      aria-label="Loading trip details"
+    >
+      <header className="h-28 animate-pulse rounded-xl border border-border bg-white p-4">
+        <span className="block h-3 w-28 rounded bg-slate-200" />
+        <span className="mt-5 block h-6 w-52 rounded bg-slate-200" />
+        <span className="mt-3 block h-3 w-72 rounded bg-slate-100" />
+      </header>
+      <section className="grid min-h-[340px] gap-3 lg:grid-cols-[minmax(0,2.1fr)_minmax(280px,.9fr)]">
+        <div className="relative grid place-items-center overflow-hidden rounded-xl border border-border bg-[#edf2ee]">
+          <div className="absolute left-[20%] top-[30%] size-4 rounded-full bg-slate-300" />
+          <div className="absolute right-[22%] bottom-[22%] size-4 rounded-full bg-slate-300" />
+          <span className="h-px w-1/2 rotate-12 border-t-2 border-dashed border-slate-300" />
+        </div>
+        <div className="rounded-xl border border-border bg-white p-4">
+          {Array.from({ length: 7 }, (_, index) => (
+            <span
+              key={index}
+              className="mb-5 block h-3 animate-pulse rounded bg-slate-100"
+            />
+          ))}
+        </div>
+      </section>
+      <div className="h-28 animate-pulse rounded-xl border border-border bg-white" />
+      <div className="grid gap-3 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div
+            key={index}
+            className="h-48 animate-pulse rounded-xl border border-border bg-white p-4"
+          >
+            <span className="block h-4 w-28 rounded bg-slate-200" />
+            <span className="mt-5 block h-3 rounded bg-slate-100" />
+            <span className="mt-3 block h-3 w-4/5 rounded bg-slate-100" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PartialLoadingCards() {
+  return (
+    <div className="grid gap-3 lg:grid-cols-3" aria-busy="true">
+      {['Loading exceptions…', 'Loading events…', 'Loading telemetry…'].map(
+        (label) => (
+          <section
+            key={label}
+            className="grid h-48 place-items-center rounded-xl border border-border bg-white text-center"
+          >
+            <div>
+              <LoaderCircle className="mx-auto mb-3 size-6 animate-spin text-info" />
+              <span className="text-xs text-muted">{label}</span>
+            </div>
+          </section>
+        ),
+      )}
+    </div>
+  );
+}
+
+export function TripDetail({
+  scenario = 'default',
+  tripIdOverride = null,
+}: {
+  scenario?: TripDetailScenario;
+  tripIdOverride?: string | null;
+}) {
   const selected = useTrackingStore((s) => s.selectedTripId);
   const back = useTrackingStore((s) => s.backToTower);
   const fullscreen = useTrackingStore((s) => s.fullscreen);
@@ -338,13 +409,8 @@ export function TripDetail() {
   const hover = useTrackingStore((s) => s.setHoveredTrip);
   const open = useTrackingStore((s) => s.openTrip);
   const { data, isLoading, isError, refetch } = useTrackingData();
-  if (isLoading)
-    return (
-      <div className="grid h-[calc(100vh-72px)] place-items-center">
-        <LoaderCircle className="size-9 animate-spin text-brand" />
-      </div>
-    );
-  if (isError)
+  if (scenario === 'loading' || isLoading) return <TripDetailLoading />;
+  if (scenario === 'error' || isError)
     return (
       <SystemState
         icon={<AlertCircle />}
@@ -354,7 +420,7 @@ export function TripDetail() {
         onAction={() => refetch()}
       />
     );
-  if (!data)
+  if (scenario === 'not-found' || !data)
     return (
       <SystemState
         icon={<FileText />}
@@ -364,7 +430,7 @@ export function TripDetail() {
         onAction={back}
       />
     );
-  const trip = data.trips.find((t) => t.id === selected);
+  const trip = data.trips.find((t) => t.id === (tripIdOverride ?? selected));
   if (!trip)
     return (
       <SystemState
@@ -518,12 +584,16 @@ export function TripDetail() {
         <Summary trip={trip} />
       </section>
       <Progress trip={trip} />
-      <Investigation
-        trip={trip}
-        alerts={alerts}
-        driver={driver}
-        vehicle={vehicle}
-      />
+      {scenario === 'partial' ? (
+        <PartialLoadingCards />
+      ) : (
+        <Investigation
+          trip={trip}
+          alerts={alerts}
+          driver={driver}
+          vehicle={vehicle}
+        />
+      )}
       <footer className="flex justify-between px-3 pb-3 text-[11px] text-muted">
         <span>All times shown in Central Time (CT)</span>
         <span>
