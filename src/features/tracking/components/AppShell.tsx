@@ -96,10 +96,10 @@ export function AppShell({ children, viewOverride }: { children: ReactNode; view
             <Bell className="size-5" />
             <HelpCircle className="hidden size-5 sm:block" />
             <span className="grid size-9 place-items-center rounded-full bg-charcoal text-xs font-bold text-white">
-              SJ
+              PT
             </span>
             <span className="hidden flex-col text-xs xl:flex">
-              <b>Sarah Johnson</b>
+              <b>Patricia Togonon</b>
               <small className="text-muted">Dispatcher</small>
             </span>
           </div>
