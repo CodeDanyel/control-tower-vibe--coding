@@ -88,7 +88,7 @@ export function AppShell({ children, viewOverride }: { children: ReactNode; view
               <Truck className="size-5" />
               <span className="flex flex-1 flex-col">
                 <small className="text-muted">Tenant</small>
-                <b>NordFreight Logistics</b>
+                <b>TEAM DAPAT</b>
               </span>
               <ChevronDown className="size-4" />
             </button>
