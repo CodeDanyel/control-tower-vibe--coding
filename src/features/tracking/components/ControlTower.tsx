@@ -166,7 +166,7 @@ function TripList({
       ) : (
         <div
           className="relative overflow-auto"
-          style={{ height: viewport }}
+          style={{ height: "80vh", minHeight: viewport }}
           onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
         >
           <div style={{ height: trips.length * rowH }}>
@@ -181,7 +181,7 @@ function TripList({
                     onClick={() => select(trip.id)}
                     onMouseEnter={() => setHover(trip.id)}
                     onMouseLeave={() => setHover(null)}
-                    className={`flex h-[98px] w-full gap-2 border-b border-l-[3px] border-border p-2 text-left transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-brand ${edge[trip.status]} ${selected === trip.id ? 'bg-brand/5' : hovered === trip.id ? 'bg-slate-50' : 'bg-white'}`}
+                    className={`flex h-[15vh] w-full gap-2 border-b border-l-[3px] border-border p-2 text-left transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-brand ${edge[trip.status]} ${selected === trip.id ? 'bg-brand/5' : hovered === trip.id ? 'bg-slate-50' : 'bg-white'}`}
                   >
                     <span
                       className={`mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-slate-100 ${statusText[trip.status]}`}
@@ -238,7 +238,8 @@ function Drawer({
   const close = useTrackingStore((s) => s.setDrawerOpen);
   const open = useTrackingStore((s) => s.openTrip);
   return (
-    <aside className="absolute inset-y-0 right-0 z-20 flex w-[330px] flex-col border-l border-border bg-white shadow-xl xl:static xl:shadow-none">
+    <aside className="absolute inset-y-0 right-0 z-30 w-[25%] border-l border-border bg-white p-4 shadow-xl xl:shadow-none">
+    {/* <aside className="absolute inset-y-0 right-0 z-20 flex w-[330px] flex-col border-l border-border bg-white shadow-xl xl:static xl:shadow-none"> */}
       <button
         onClick={() => close(false)}
         className="absolute right-3 top-3 rounded p-1 focus-visible:outline-2 focus-visible:outline-brand"
@@ -364,114 +365,114 @@ function Metric({
   );
 }
 
-function Exceptions({
-  alerts,
-  trips,
-  drivers,
-  vehicles,
-}: {
-  alerts: Alert[];
-  trips: Trip[];
-  drivers: Driver[];
-  vehicles: Vehicle[];
-}) {
-  const selected = useTrackingStore((s) => s.selectedTripId);
-  const select = useTrackingStore((s) => s.selectTrip);
-  return (
-    <section className="overflow-hidden rounded-xl border border-border bg-white">
-      <div className="flex h-10 items-center justify-between px-4 text-sm">
-        <b>Active Exceptions ({alerts.length})</b>
-        <button className="text-xs font-semibold text-info">
-          View all exceptions
-        </button>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1050px] text-left text-[11px]">
-          <thead className="border-y border-border bg-slate-50 text-muted">
-            <tr>
-              {[
-                'Trip ID',
-                'Type',
-                'Severity',
-                'Description',
-                'Location',
-                'Detected At',
-                'Duration',
-                'Driver',
-                'Vehicle',
-                'ETA Impact',
-              ].map((x) => (
-                <th key={x} className="px-3 py-2 font-semibold">
-                  {x}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {!alerts.length && (
-              <tr>
-                <td
-                  colSpan={10}
-                  className="h-28 text-center text-sm text-muted"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Check className="size-5 text-status-green" />
-                    {COPY.noExceptions}
-                  </span>
-                </td>
-              </tr>
-            )}
-            {alerts.map((alert) => {
-              const trip = trips.find((t) => t.id === alert.tripId),
-                driver = drivers.find((d) => d.id === trip?.driverId),
-                vehicle = vehicles.find((v) => v.id === trip?.vehicleId);
-              return (
-                <tr
-                  key={alert.id}
-                  onClick={() => select(alert.tripId)}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ')
-                      select(alert.tripId);
-                  }}
-                  className={`cursor-pointer border-b border-border focus-visible:outline-2 focus-visible:outline-brand ${selected === alert.tripId ? 'bg-brand/5' : 'hover:bg-slate-50'}`}
-                >
-                  <td className="px-3 py-2 font-bold">
-                    <span
-                      className={`mr-2 inline-block size-1.5 rounded-full ${alert.severity === 'high' ? 'bg-status-red' : 'bg-status-amber'}`}
-                    />
-                    {alert.tripId}
-                  </td>
-                  <td className="px-3">{alert.type.replaceAll('_', ' ')}</td>
-                  <td className="px-3">
-                    <span
-                      className={`rounded-full px-2 py-1 font-bold ${alert.severity === 'high' ? 'bg-status-red-soft text-status-red' : 'bg-status-amber-soft text-status-amber'}`}
-                    >
-                      {alert.severity}
-                    </span>
-                  </td>
-                  <td className="px-3">{alert.message}</td>
-                  <td className="px-3">{alert.location}</td>
-                  <td className="px-3">{formatTime(alert.raisedAt)}</td>
-                  <td className="px-3">
-                    {formatDuration(alert.durationMinutes)}
-                  </td>
-                  <td className="px-3">{driver?.name}</td>
-                  <td className="px-3">{vehicle?.plateNumber}</td>
-                  <td className="px-3 font-bold text-status-red">
-                    {alert.etaImpactMinutes
-                      ? formatVariance(alert.etaImpactMinutes)
-                      : '—'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
+// function Exceptions({
+//   alerts,
+//   trips,
+//   drivers,
+//   vehicles,
+// }: {
+//   alerts: Alert[];
+//   trips: Trip[];
+//   drivers: Driver[];
+//   vehicles: Vehicle[];
+// }) {
+//   const selected = useTrackingStore((s) => s.selectedTripId);
+//   const select = useTrackingStore((s) => s.selectTrip);
+//   return (
+//     <section className="overflow-hidden rounded-xl border border-border bg-white">
+//       <div className="flex h-10 items-center justify-between px-4 text-sm">
+//         <b>Active Exceptions ({alerts.length})</b>
+//         <button className="text-xs font-semibold text-info">
+//           View all exceptions
+//         </button>
+//       </div>
+//       <div className="overflow-x-auto">
+//         <table className="w-full min-w-[1050px] text-left text-[11px]">
+//           <thead className="border-y border-border bg-slate-50 text-muted">
+//             <tr>
+//               {[
+//                 'Trip ID',
+//                 'Type',
+//                 'Severity',
+//                 'Description',
+//                 'Location',
+//                 'Detected At',
+//                 'Duration',
+//                 'Driver',
+//                 'Vehicle',
+//                 'ETA Impact',
+//               ].map((x) => (
+//                 <th key={x} className="px-3 py-2 font-semibold">
+//                   {x}
+//                 </th>
+//               ))}
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {!alerts.length && (
+//               <tr>
+//                 <td
+//                   colSpan={10}
+//                   className="h-28 text-center text-sm text-muted"
+//                 >
+//                   <span className="inline-flex items-center gap-2">
+//                     <Check className="size-5 text-status-green" />
+//                     {COPY.noExceptions}
+//                   </span>
+//                 </td>
+//               </tr>
+//             )}
+//             {alerts.map((alert) => {
+//               const trip = trips.find((t) => t.id === alert.tripId),
+//                 driver = drivers.find((d) => d.id === trip?.driverId),
+//                 vehicle = vehicles.find((v) => v.id === trip?.vehicleId);
+//               return (
+//                 <tr
+//                   key={alert.id}
+//                   onClick={() => select(alert.tripId)}
+//                   tabIndex={0}
+//                   onKeyDown={(e) => {
+//                     if (e.key === 'Enter' || e.key === ' ')
+//                       select(alert.tripId);
+//                   }}
+//                   className={`cursor-pointer border-b border-border focus-visible:outline-2 focus-visible:outline-brand ${selected === alert.tripId ? 'bg-brand/5' : 'hover:bg-slate-50'}`}
+//                 >
+//                   <td className="px-3 py-2 font-bold">
+//                     <span
+//                       className={`mr-2 inline-block size-1.5 rounded-full ${alert.severity === 'high' ? 'bg-status-red' : 'bg-status-amber'}`}
+//                     />
+//                     {alert.tripId}
+//                   </td>
+//                   <td className="px-3">{alert.type.replaceAll('_', ' ')}</td>
+//                   <td className="px-3">
+//                     <span
+//                       className={`rounded-full px-2 py-1 font-bold ${alert.severity === 'high' ? 'bg-status-red-soft text-status-red' : 'bg-status-amber-soft text-status-amber'}`}
+//                     >
+//                       {alert.severity}
+//                     </span>
+//                   </td>
+//                   <td className="px-3">{alert.message}</td>
+//                   <td className="px-3">{alert.location}</td>
+//                   <td className="px-3">{formatTime(alert.raisedAt)}</td>
+//                   <td className="px-3">
+//                     {formatDuration(alert.durationMinutes)}
+//                   </td>
+//                   <td className="px-3">{driver?.name}</td>
+//                   <td className="px-3">{vehicle?.plateNumber}</td>
+//                   <td className="px-3 font-bold text-status-red">
+//                     {alert.etaImpactMinutes
+//                       ? formatVariance(alert.etaImpactMinutes)
+//                       : '—'}
+//                   </td>
+//                 </tr>
+//               );
+//             })}
+//           </tbody>
+//         </table>
+//       </div>
+//     </section>
+//   );
+// }
 
 function Filters() {
   const open = useTrackingStore((s) => s.filtersOpen);
@@ -707,7 +708,7 @@ export function ControlTower({
         className={`relative overflow-hidden border border-border bg-white ${fullscreen ? 'h-screen rounded-none' : 'h-[545px] rounded-xl'}`}
       >
         <div
-          className={`grid size-full ${fullscreen ? 'grid-cols-[285px_1fr]' : 'grid-cols-[285px_1fr] xl:grid-cols-[285px_1fr_330px]'}`}
+          className={`grid size-full ${!drawer ? 'grid-cols-[285px_1fr] xl:grid-cols-[285px_1fr]' : fullscreen ? 'grid-cols-[285px_1fr]' : 'grid-cols-[285px_1fr] xl:grid-cols-[285px_1fr_300px]'}`}
         >
           <TripList
             trips={filtered}
@@ -720,7 +721,7 @@ export function ControlTower({
           />
           <div className="relative">
             <div className="absolute left-3 top-3 z-10 flex gap-2">
-              <span className="rounded-lg border border-border bg-white px-3 py-2 text-[11px]">
+              <span className="rounded-lg border border-border bg-white px-3 py-2 text-[12px]">
                 <i className="mr-1.5 inline-block size-2 rounded-full bg-status-green" />
                 Live updates
               </span>
@@ -753,14 +754,14 @@ export function ControlTower({
         </div>
         <Filters />
       </section>
-      {!fullscreen && (
+      {/* {!fullscreen && (
         <Exceptions
           alerts={alerts}
           trips={data.trips}
           drivers={data.drivers}
           vehicles={data.vehicles}
         />
-      )}
+      )} */}
     </div>
   );
 }
